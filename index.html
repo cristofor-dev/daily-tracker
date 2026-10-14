@@ -547,7 +547,10 @@
         <span class="dot"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12l4-4 3 2 5-6"/><path d="M10.5 4H14v3.5"/></svg></span>
         <h1>Daily Tracker</h1>
       </div>
-      <button class="pillbtn" id="jumpToday">Today</button>
+      <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+        <button class="pillbtn" id="gTop" type="button" title="Sign in with Google" style="max-width:190px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Sign in</button>
+        <button class="pillbtn" id="jumpToday">Today</button>
+      </div>
     </div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-today" aria-selected="true" aria-controls="panel-today">Today</button>
@@ -2530,6 +2533,9 @@
     $g("gSignIn").hidden = on;
     $g("gSync").hidden = !on;
     $g("gSignOut").hidden = !on;
+    const t = $g("gTop");
+    t.textContent = on ? gUser.email : "Sign in";
+    t.title = on ? "Signed in — open account settings" : "Sign in with Google";
   }
   function gLoadScript(){
     return new Promise((res, rej)=>{
@@ -2648,6 +2654,9 @@
     }
   }
   $g("gSignIn").addEventListener("click", ()=>gConnect(true));
+  $g("gTop").addEventListener("click", ()=>{
+    if(gUser) document.getElementById("tab-manage").click(); else gConnect(true);
+  });
   $g("gSync").addEventListener("click", async ()=>{
     try{ gStatus("Syncing…"); await driveSync(); }
     catch(e){ gStatus("Could not sync with Google Drive (" + e.message + ")."); }

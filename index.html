@@ -137,6 +137,48 @@
   .pillbtn:hover:not(:disabled){border-color:var(--line-2); color:var(--ink);}
   .pillbtn:disabled{opacity:.35; cursor:default;}
 
+  /* ---------- account button ---------- */
+  .acct{position:relative;}
+  .gbtn{
+    font:inherit; font-size:13px; font-weight:600; color:var(--ink);
+    display:inline-flex; align-items:center; gap:8px; height:34px;
+    background:var(--surface); border:1px solid var(--line-2); border-radius:99px;
+    padding:0 14px 0 11px; cursor:pointer; box-shadow:var(--sh-1);
+    transition:border-color .14s, box-shadow .14s, transform .14s;
+  }
+  .gbtn:hover{border-color:var(--accent); box-shadow:var(--sh-2);}
+  .gbtn:active{transform:translateY(1px);}
+  .gbtn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .gbtn.in{padding:0 8px 0 3px; gap:6px;}
+  .gbtn[hidden], .acct [hidden]{display:none!important;}
+  .avatar{
+    position:relative; width:28px; height:28px; border-radius:50%; flex:none;
+    background:var(--accent); color:#fff; font-size:13px; font-weight:700;
+    display:grid; place-items:center; overflow:hidden;
+  }
+  .avatar img{width:100%; height:100%; object-fit:cover; display:block;}
+  .avatar.lg{width:40px; height:40px; font-size:17px;}
+  .okdot{
+    position:absolute; right:-1px; bottom:-1px; width:9px; height:9px; border-radius:50%;
+    background:var(--good); border:2px solid var(--surface);
+  }
+  .acctmenu{
+    position:absolute; right:0; top:calc(100% + 8px); width:270px; z-index:50;
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md);
+    box-shadow:var(--sh-2); padding:14px;
+  }
+  .acctwho{display:flex; align-items:center; gap:11px; min-width:0;}
+  .acctwho .txt{min-width:0; line-height:1.3;}
+  .acctwho b{display:block; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .acctwho .txt span{display:block; font-size:12.5px; color:var(--ink-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .acctstate{
+    margin:12px 0; padding:8px 10px; border-radius:var(--r-sm); font-size:12.5px;
+    color:var(--ink-2); background:var(--surface-2);
+  }
+  .acctactions{display:flex; gap:8px;}
+  .acctactions .btn{flex:1; padding:8px 10px; font-size:13px;}
+  @media (max-width:380px){ .gbtn .gl{display:none;} .gbtn:not(.in){padding:0 10px;} }
+
   /* ---------- progress ring ---------- */
   .dayring{display:flex; align-items:center; gap:14px; padding:0 16px 14px;}
   .ring{width:52px; height:52px; flex:none; position:relative;}
@@ -548,7 +590,26 @@
         <h1>Daily Tracker</h1>
       </div>
       <div style="display:flex; align-items:center; gap:8px; min-width:0;">
-        <button class="pillbtn" id="gTop" type="button" title="Sign in with Google" style="max-width:190px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Sign in</button>
+        <div class="acct" id="acct">
+          <button class="gbtn" id="gTop" type="button" aria-haspopup="menu" aria-expanded="false" title="Sign in with Google">
+            <span id="gTopOut" style="display:inline-flex; align-items:center; gap:8px;"><svg viewBox="0 0 18 18" width="16" height="16" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.33-1.58-5.04-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.96 10.72A5.4 5.4 0 0 1 3.68 9c0-.6.1-1.18.28-1.72V4.95H.96A9 9 0 0 0 0 9c0 1.45.35 2.82.96 4.05l3-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.95l3 2.33C4.67 5.16 6.66 3.58 9 3.58z"/></svg><span class="gl">Sign in</span></span>
+            <span id="gTopIn" hidden style="display:inline-flex; align-items:center; gap:6px;">
+              <span class="avatar" id="gAvatar"><span class="okdot"></span></span>
+              <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+            </span>
+          </button>
+          <div class="acctmenu" id="acctMenu" role="menu" hidden>
+            <div class="acctwho">
+              <span class="avatar lg" id="gAvatarLg"></span>
+              <span class="txt"><b id="gName"></b><span id="gMail"></span></span>
+            </div>
+            <div class="acctstate" id="gMenuState"></div>
+            <div class="acctactions">
+              <button class="btn" type="button" id="gMenuSync">Sync now</button>
+              <button class="btn sub" type="button" id="gMenuOut">Sign out</button>
+            </div>
+          </div>
+        </div>
         <button class="pillbtn" id="jumpToday">Today</button>
       </div>
     </div>
@@ -2527,16 +2588,35 @@
   let gPending = null, gTimer = null, gBusy = false;
 
   const $g = id=>document.getElementById(id);
-  function gStatus(t){ $g("gStatus").textContent = t; setNote(t); }
+  function gStatus(t){ $g("gStatus").textContent = t; $g("gMenuState").textContent = t; setNote(t); }
   function gRender(){
     const on = !!gUser;
     $g("gSignIn").hidden = on;
     $g("gSync").hidden = !on;
     $g("gSignOut").hidden = !on;
     const t = $g("gTop");
-    t.textContent = on ? gUser.email : "Sign in";
-    t.title = on ? "Signed in — open account settings" : "Sign in with Google";
+    t.classList.toggle("in", on);
+    $g("gTopOut").hidden = on;
+    $g("gTopIn").hidden = !on;
+    t.title = on ? gUser.email : "Sign in with Google";
+    if(on){
+      const letter = (gUser.name || gUser.email || "?").trim().charAt(0).toUpperCase();
+      const fill = el=>{
+        el.querySelectorAll("img").forEach(i=>i.remove());
+        if(el.firstChild && el.firstChild.nodeType === 3) el.removeChild(el.firstChild);
+        if(gUser.picture){
+          const im = document.createElement("img");
+          im.src = gUser.picture; im.alt = ""; im.referrerPolicy = "no-referrer";
+          im.onerror = ()=>{ im.remove(); el.insertBefore(document.createTextNode(letter), el.firstChild); };
+          el.insertBefore(im, el.firstChild);
+        }else el.insertBefore(document.createTextNode(letter), el.firstChild);
+      };
+      fill($g("gAvatar")); fill($g("gAvatarLg"));
+      $g("gName").textContent = gUser.name || gUser.email;
+      $g("gMail").textContent = gUser.email;
+    }else closeAcct();
   }
+  function closeAcct(){ $g("acctMenu").hidden = true; $g("gTop").setAttribute("aria-expanded","false"); }
   function gLoadScript(){
     return new Promise((res, rej)=>{
       if(window.google && google.accounts && google.accounts.oauth2) return res();
@@ -2643,7 +2723,7 @@
       let hint = ""; try{ hint = localStorage.getItem(G_HINT_KEY) || ""; }catch(e){}
       await gRequest(interactive ? {prompt: hint ? "" : "select_account", login_hint: hint || undefined} : {prompt:"none", login_hint: hint || undefined});
       const info = await (await gFetch("https://www.googleapis.com/oauth2/v3/userinfo")).json();
-      gUser = {email: info.email, name: info.name};
+      gUser = {email: info.email, name: info.name, picture: info.picture};
       try{ localStorage.setItem(G_HINT_KEY, info.email); }catch(e){}
       gRender();
       await driveSync();
@@ -2655,8 +2735,14 @@
   }
   $g("gSignIn").addEventListener("click", ()=>gConnect(true));
   $g("gTop").addEventListener("click", ()=>{
-    if(gUser) document.getElementById("tab-manage").click(); else gConnect(true);
+    if(!gUser) return gConnect(true);
+    const m = $g("acctMenu"); m.hidden = !m.hidden;
+    $g("gTop").setAttribute("aria-expanded", String(!m.hidden));
   });
+  document.addEventListener("click", e=>{ if(!$g("acct").contains(e.target)) closeAcct(); });
+  document.addEventListener("keydown", e=>{ if(e.key === "Escape") closeAcct(); });
+  $g("gMenuSync").addEventListener("click", ()=>$g("gSync").click());
+  $g("gMenuOut").addEventListener("click", ()=>$g("gSignOut").click());
   $g("gSync").addEventListener("click", async ()=>{
     try{ gStatus("Syncing…"); await driveSync(); }
     catch(e){ gStatus("Could not sync with Google Drive (" + e.message + ")."); }

@@ -2637,7 +2637,7 @@
   const G_FILE = "daily-tracker.json";
   const G_HINT_KEY = "daily-ledger-google-hint";
   let gClient = null, gToken = null, gTokenExp = 0, gUser = null, gFileId = null;
-  let gPending = null, gTimer = null, gBusy = false;
+  let gPending = null, gTimer = null, gBusy = false, gDirty = false;
 
   const $g = id=>document.getElementById(id);
   function gStatus(t){ $g("gStatus").textContent = t; $g("gMenuState").textContent = t; setNote(t); }
@@ -2733,14 +2733,31 @@
   }
   function scheduleDrivePush(){
     if(!gUser || gBusy) return;
+    gDirty = true;
     clearTimeout(gTimer);
     gTimer = setTimeout(async ()=>{
+      gDirty = false;
       try{ await drivePush(); gStatus("Saved to Google Drive · " + gUser.email); }
-      catch(e){ gStatus(e.message === "expired" || /popup|access|immediate|interaction/i.test(e.message)
+      catch(e){ gDirty = true; gStatus(e.message === "expired" || /popup|access|immediate|interaction/i.test(e.message)
         ? "Google session expired — press Sync now to reconnect. Changes are kept in this browser."
         : "Could not save to Google Drive — changes are kept in this browser."); }
     }, 800);
   }
+  // Page is being hidden or closed with a change still waiting for its timer:
+  // send it now. keepalive lets the request outlive the page (64 KB cap).
+  function flushDrive(){
+    if(!gDirty || !gUser || !gToken || !gFileId || gBusy || Date.now() > gTokenExp) return;
+    clearTimeout(gTimer);
+    const body = snapshotBody();
+    gDirty = false;
+    fetch("https://www.googleapis.com/upload/drive/v3/files/" + gFileId + "?uploadType=media", {
+      method:"PATCH", keepalive: new Blob([body]).size < 60000,
+      headers:{Authorization:"Bearer " + gToken, "Content-Type":"application/json"}, body
+    }).then(r=>{ if(!r.ok) gDirty = true; }).catch(()=>{ gDirty = true; });
+  }
+  document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState === "hidden") flushDrive(); });
+  window.addEventListener("pagehide", flushDrive);
+
   // First sync after sign-in: the newer copy wins (local vs. Drive).
   async function driveSync(){
     gBusy = true;

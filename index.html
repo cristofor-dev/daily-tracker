@@ -2217,6 +2217,53 @@
 
   // Preturile editate de utilizator, suprascriu catalogul: {modelId:{res:pret}}
   let priceOverrides = {};
+
+  // ---- live prices ---------------------------------------------------------
+  // On every page load the catalog is refreshed from LiteLLM's public price
+  // list (GitHub). Only models that list covers are touched; each one is scaled
+  // by live/catalog at 1024x1024, so its other resolutions keep their ratios.
+  // Google: per-image price. OpenAI GPT Image 1 / 1.5: published output-token
+  // count for a 1024x1024 image x price per output token.
+  const LIVE_URL = "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json";
+  const LIVE_MAP = {
+    nb2:        {key:"vertex_ai/gemini-3.1-flash-image"},
+    nb2lite:    {key:"vertex_ai/gemini-3.1-flash-lite-image"},
+    nbpro:      {key:"vertex_ai/gemini-3-pro-image"},
+    nb:         {key:"vertex_ai/gemini-2.5-flash-image"},
+    "gi15-low": {key:"gpt-image-1.5", tokens:272},
+    "gi15-med": {key:"gpt-image-1.5", tokens:1056},
+    "gi15-high":{key:"gpt-image-1.5", tokens:4160},
+    "gi1-low":  {key:"gpt-image-1",   tokens:272},
+    "gi1-med":  {key:"gpt-image-1",   tokens:1056},
+    "gi1-high": {key:"gpt-image-1",   tokens:4160}
+  };
+  let liveRatio = {};
+  let liveState = {n:0, at:null, failed:false};
+  async function loadLivePrices(){
+    try{
+      const ctl = new AbortController();
+      const to = setTimeout(()=>ctl.abort(), 15000);
+      const r = await fetch(LIVE_URL, {signal: ctl.signal, cache:"no-cache"});
+      clearTimeout(to);
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      const data = await r.json();
+      const next = {};
+      for(const m of MODELS){
+        const spec = LIVE_MAP[m.id], row = spec && data[spec.key];
+        if(!row) continue;
+        const live = spec.tokens ? spec.tokens * row.output_cost_per_image_token : row.output_cost_per_image;
+        const base = m.px[SQ];
+        // ignore missing or absurd values rather than show a wrong price
+        if(!(live > 0) || !(base > 0) || live / base < 0.25 || live / base > 4) continue;
+        next[m.id] = live / base;
+      }
+      liveRatio = next;
+      liveState = {n:Object.keys(next).length, at:new Date(), failed:false};
+    }catch(e){
+      liveState.failed = true;
+    }
+    renderCost();
+  }
   let costSel = {model:"nb2", res:SQ, qty:1000, runs:1, batch:false};
 
   // null = modelul nu ofera rezolutia respectiva
@@ -2224,7 +2271,9 @@
     const ov = priceOverrides[m.id] && priceOverrides[m.id][res];
     if(ov != null) return ov;
     const base = m.px[res];
-    return (base == null) ? null : base;
+    if(base == null) return null;
+    const k = liveRatio[m.id];
+    return k ? Number((base * k).toPrecision(4)) : base;
   }
   function supports(m, res){ return priceOf(m, res) != null; }
   function effectivePrice(m, res, batch){
@@ -2275,7 +2324,9 @@
     document.getElementById("cQty").value = costSel.qty;
     document.getElementById("cRuns").value = costSel.runs;
     document.getElementById("cBatch").setAttribute("aria-pressed", costSel.batch ? "true":"false");
-    document.getElementById("costAsOf").textContent = "preţuri la " + PRICE_ASOF;
+    document.getElementById("costAsOf").textContent = liveState.n
+      ? liveState.n + " modele cu preţ live · restul la " + PRICE_ASOF
+      : (liveState.failed ? "preţuri la " + PRICE_ASOF + " (live indisponibil)" : "preţuri la " + PRICE_ASOF);
 
     const pr = document.getElementById("qtyPresets");
     if(!pr.children.length){
@@ -2428,7 +2479,7 @@
       const n1 = document.createElement("div");
       n1.className = "mname"; n1.textContent = r.m.name;
       const n2 = document.createElement("div");
-      n2.className = "mprov"; n2.textContent = r.m.prov;
+      n2.className = "mprov"; n2.textContent = r.m.prov + (liveRatio[r.m.id] ? " · live" : "");
       td1.append(n1, n2);
 
       const td2 = document.createElement("td");
@@ -2522,6 +2573,7 @@
   });
 
   renderCost();
+  loadLivePrices();
 
   // ---- backup: export / import -------------------------------------------
   function bkMsg(t){ document.getElementById("bkMsg").textContent = t; }
